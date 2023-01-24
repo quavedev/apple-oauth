@@ -2,7 +2,7 @@
 import { Promise } from 'meteor/promise';
 import Apple from './namespace.js';
 import { Accounts } from 'meteor/accounts-base';
-import { getAppIdFromOptions, getClientIdFromOptions, getServiceConfiguration } from './utils';
+import { getAppIdFromOptions, getClientIdFromOptions, getServiceConfiguration, METHOD_NAMES } from './utils';
 
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
@@ -65,10 +65,11 @@ const verifyAndParseIdentityToken = (query, idToken, isNative = false) =>
  * Extracts data from apples tokens and formats for accounts
  *
  * @param query
- * @param {*} tokens tokens and data from apple
+ * @param tokens tokens and data from apple
  * @param isNative
+ * @param isBeingCalledFromLoginHandler
  */
-const getServiceDataFromTokens = (query, tokens, isNative = false) => {
+const getServiceDataFromTokens = ({ query, tokens, isNative = false, isBeingCalledFromLoginHandler = false }) => {
   const { accessToken, idToken, expiresIn } = tokens;
   const scopes = 'name email';
 
@@ -108,16 +109,18 @@ const getServiceDataFromTokens = (query, tokens, isNative = false) => {
     options.profile.name = tokens.user.name;
   }
 
-  return isNative
-    ? Accounts.updateOrCreateUserFromExternalService(
+  if (isBeingCalledFromLoginHandler) {
+    return Accounts.updateOrCreateUserFromExternalService(
         'apple',
         serviceData,
         options
-      )
-    : {
-        serviceData,
-        options,
-      };
+    )
+  }
+
+  return {
+    serviceData,
+    options,
+  };
 };
 
 /**
@@ -182,7 +185,7 @@ function getAbsoluteUrlOptions(query) {
  *
  * @param {*} query auth/authorize redirect response from apple
  */
-const getTokens = (query, isNative = false) => {
+const getTokens = ({query, isNative = false}) => {
   const endpoint = 'https://appleid.apple.com/auth/token';
   let state = {};
   try {
@@ -266,11 +269,18 @@ const getTokens = (query, isNative = false) => {
 };
 
 const getServiceData = query =>
-  getServiceDataFromTokens(query, getTokens(query, false), false);
+  getServiceDataFromTokens({
+    query, tokens: getTokens({query})
+});
 OAuth.registerService('apple', 2, null, getServiceData);
 Accounts.registerLoginHandler(query => {
-  if (query.methodName != 'native-apple') {
+  const methodName = query.methodName;
+  if (!Object.values(METHOD_NAMES).includes(methodName)) {
     return;
   }
-  return getServiceDataFromTokens(query, getTokens(query, true), true);
+
+  const isNative = methodName === METHOD_NAMES.NATIVE;
+  return getServiceDataFromTokens({
+    query, tokens: getTokens({query, isNative}), isNative, isBeingCalledFromLoginHandler: true
+  });
 });
