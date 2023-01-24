@@ -67,9 +67,9 @@ const verifyAndParseIdentityToken = (query, idToken, isNative = false) =>
  * @param query
  * @param {*} tokens tokens and data from apple
  * @param isNative
- * @param fromLoginHandler
+ * @param isBeingCalledFromLoginHandler
  */
-const getServiceDataFromTokens = (query, tokens, isNative = false, fromLoginHandler = false) => {
+const getServiceDataFromTokens = (query, tokens, isNative = false, isBeingCalledFromLoginHandler = false) => {
   const { accessToken, idToken, expiresIn } = tokens;
   const scopes = 'name email';
 
@@ -109,7 +109,7 @@ const getServiceDataFromTokens = (query, tokens, isNative = false, fromLoginHand
     options.profile.name = tokens.user.name;
   }
 
-  if (fromLoginHandler) {
+  if (isBeingCalledFromLoginHandler) {
     return Accounts.updateOrCreateUserFromExternalService(
         'apple',
         serviceData,
