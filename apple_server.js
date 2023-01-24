@@ -2,7 +2,7 @@
 import { Promise } from 'meteor/promise';
 import Apple from './namespace.js';
 import { Accounts } from 'meteor/accounts-base';
-import { getAppIdFromOptions, getClientIdFromOptions, getServiceConfiguration } from './utils';
+import { getAppIdFromOptions, getClientIdFromOptions, getServiceConfiguration, METHOD_NAMES } from './utils';
 
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
@@ -65,11 +65,11 @@ const verifyAndParseIdentityToken = (query, idToken, isNative = false) =>
  * Extracts data from apples tokens and formats for accounts
  *
  * @param query
- * @param {*} tokens tokens and data from apple
+ * @param tokens tokens and data from apple
  * @param isNative
  * @param isBeingCalledFromLoginHandler
  */
-const getServiceDataFromTokens = (query, tokens, isNative = false, isBeingCalledFromLoginHandler = false) => {
+const getServiceDataFromTokens = ({ query, tokens, isNative = false, isBeingCalledFromLoginHandler = false }) => {
   const { accessToken, idToken, expiresIn } = tokens;
   const scopes = 'name email';
 
@@ -269,14 +269,18 @@ const getTokens = (query, isNative = false) => {
 };
 
 const getServiceData = query =>
-  getServiceDataFromTokens(query, getTokens(query, false), false);
+  getServiceDataFromTokens({
+    query, tokens: getTokens(query, false), isNative: false, isBeingCalledFromLoginHandler: false,
+});
 OAuth.registerService('apple', 2, null, getServiceData);
 Accounts.registerLoginHandler(query => {
   const methodName = query.methodName;
-  if (!["native-apple", "web-apple"].includes(methodName)) {
+  if (!Object.values(METHOD_NAMES).includes(methodName)) {
     return;
   }
 
-  const isNative = methodName === "native-apple";
-  return getServiceDataFromTokens(query, getTokens(query, isNative), isNative, true);
+  const isNative = methodName === METHOD_NAMES.NATIVE;
+  return getServiceDataFromTokens({
+    query, tokens: getTokens(query, isNative), isNative, isBeingCalledFromLoginHandler: true
+  });
 });

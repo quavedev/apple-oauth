@@ -47,6 +47,54 @@ And log in calling:
   });
 ```
 
+### Login without Cordova
+
+If you are using `react-native` or any other tool besides Cordova, you can also use this library.
+You just need to fetch the credentials from Apple, and then send it to the Meteor server:
+```
+Meteor.call(
+          "login",
+          {
+            ...credentials,
+            code: credentials[supportsIos ? 'authorizationCode' : 'code'],
+            methodName: `${supportsIos ? 'native' : 'web'}-apple`,
+          }, (err) => {...})
+```
+
+## React-native
+In react native you could log in using `invertase/react-native-apple-authentication` and `meteorrn/core`:
+```
+Meteor.loginWithApple = async () => {
+    const credentials = await appleAuth.performRequest({
+    requestedOperation: appleAuth.Operation.LOGIN,
+    requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
+  });
+  
+  return new Promise((resolve, reject) => {
+      Meteor._startLoggingIn();
+      Meteor.call(
+          "login",
+          {
+            ...credentials,
+            code: credentials.authorizationCode,
+            // For android you need to use 'web-apple' as the method name.
+            methodName: 'native-apple',
+          },
+          (error: any, response: unknown) => {
+            Meteor._endLoggingIn();
+            Meteor._handleLoginCallback(error, response);
+
+            if (error) {
+              return reject(error);
+            }
+
+            resolve(response);
+          }
+      );
+    });
+}
+```
+
 ## Use multiple services ids
 
 Because of a limitation imposed by apple, organization accounts can set up to 100 domains+redirect urls, and individuals only 10.
