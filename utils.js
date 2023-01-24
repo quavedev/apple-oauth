@@ -70,3 +70,8 @@ export function stateParam({
   // Use the 'base64' package here because 'btoa' isn't supported in IE8/9.
   return Base64.encode(JSON.stringify(state));
 }
+
+export const METHOD_NAMES = {
+  NATIVE: 'native-apple',
+  WEB: 'web-apple'
+}
