@@ -1,5 +1,9 @@
 ## Changelog
 
+### v3.1.0
+
+Add new endpoint for web-based authentication ("web-apple") for clients other than Cordova.
+
 ### v3.0.0
 
 We don't have breaking changes in this version.
