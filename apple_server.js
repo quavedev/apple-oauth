@@ -185,7 +185,7 @@ function getAbsoluteUrlOptions(query) {
  *
  * @param {*} query auth/authorize redirect response from apple
  */
-const getTokens = (query, isNative = false) => {
+const getTokens = ({query, isNative = false}) => {
   const endpoint = 'https://appleid.apple.com/auth/token';
   let state = {};
   try {
@@ -270,7 +270,7 @@ const getTokens = (query, isNative = false) => {
 
 const getServiceData = query =>
   getServiceDataFromTokens({
-    query, tokens: getTokens(query, false), isNative: false, isBeingCalledFromLoginHandler: false,
+    query, tokens: getTokens({query})
 });
 OAuth.registerService('apple', 2, null, getServiceData);
 Accounts.registerLoginHandler(query => {
@@ -281,6 +281,6 @@ Accounts.registerLoginHandler(query => {
 
   const isNative = methodName === METHOD_NAMES.NATIVE;
   return getServiceDataFromTokens({
-    query, tokens: getTokens(query, isNative), isNative, isBeingCalledFromLoginHandler: true
+    query, tokens: getTokens({query, isNative}), isNative, isBeingCalledFromLoginHandler: true
   });
 });
