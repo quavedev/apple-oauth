@@ -67,8 +67,9 @@ const verifyAndParseIdentityToken = (query, idToken, isNative = false) =>
  * @param query
  * @param {*} tokens tokens and data from apple
  * @param isNative
+ * @param fromLoginHandler
  */
-const getServiceDataFromTokens = (query, tokens, isNative = false) => {
+const getServiceDataFromTokens = (query, tokens, isNative = false, fromLoginHandler = false) => {
   const { accessToken, idToken, expiresIn } = tokens;
   const scopes = 'name email';
 
@@ -108,16 +109,18 @@ const getServiceDataFromTokens = (query, tokens, isNative = false) => {
     options.profile.name = tokens.user.name;
   }
 
-  return isNative
-    ? Accounts.updateOrCreateUserFromExternalService(
+  if (fromLoginHandler) {
+    return Accounts.updateOrCreateUserFromExternalService(
         'apple',
         serviceData,
         options
-      )
-    : {
-        serviceData,
-        options,
-      };
+    )
+  }
+
+  return {
+    serviceData,
+    options,
+  };
 };
 
 /**
@@ -269,8 +272,11 @@ const getServiceData = query =>
   getServiceDataFromTokens(query, getTokens(query, false), false);
 OAuth.registerService('apple', 2, null, getServiceData);
 Accounts.registerLoginHandler(query => {
-  if (query.methodName != 'native-apple') {
+  const methodName = query.methodName;
+  if (!["native-apple", "web-apple"].includes(methodName)) {
     return;
   }
-  return getServiceDataFromTokens(query, getTokens(query, true), true);
+
+  const isNative = methodName === "native-apple";
+  return getServiceDataFromTokens(query, getTokens(query, isNative), isNative, true);
 });
