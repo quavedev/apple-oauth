@@ -88,10 +88,10 @@ const getServiceDataFromTokens = ({ query, tokens, isNative = false, isBeingCall
     idToken,
     scope: scopes,
     expiresAt: Date.now() + 1000 * parseInt(expiresIn, 10),
-    email: parsedIdToken.email,
+    email: parsedIdToken.email || query.email,
   };
 
-  // only set the token in serviceData if it's there. this ensures
+  // Only set the token in serviceData if it's there. this ensures
   // that we don't lose old ones (since we only get this on the first
   // log in attempt)
   if (tokens.refreshToken) {
@@ -100,7 +100,8 @@ const getServiceDataFromTokens = ({ query, tokens, isNative = false, isBeingCall
 
   const options = { profile: { email: serviceData.email } };
 
-  if (tokens.fullName) {
+  // Only set the fullName if it's not empty.
+  if (tokens.fullName && !/^\s*$/.test(tokens.fullName)) {
     serviceData.name = tokens.fullName;
     options.profile.name = tokens.fullName;
   }
@@ -114,7 +115,7 @@ const getServiceDataFromTokens = ({ query, tokens, isNative = false, isBeingCall
         'apple',
         serviceData,
         options
-    )
+    );
   }
 
   return {
@@ -262,7 +263,9 @@ const getTokens = ({query, isNative = false}) => {
             query.fullName.givenName,
             query.fullName.middleName,
             query.fullName.familyName,
-          ].join(' ')
+          ]
+              .filter(Boolean)
+              .join(' ')
         : '',
     };
   }
