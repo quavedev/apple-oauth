@@ -48,10 +48,11 @@ Apple.requestCredential = function(options, oauthCallback, nativeCallback) {
         : 'name%20email';
 
     const redirectUri =
+      config.redirectUri ||
       (options &&
         options.absoluteUrlOptions &&
-        options.absoluteUrlOptions.rootUrl) ||
-      config.redirectUri;
+        options.absoluteUrlOptions.rootUrl);
+      
     const redirectUriWithOauth = redirectUri.includes('/_oauth/apple')
       ? redirectUri
       : `${redirectUri}${redirectUri.endsWith('/') ? '' : '/'}_oauth/apple`;
