@@ -1,6 +1,13 @@
-# quavedev:apple-oauth
+# quave:apple-oauth
 
 Sign in with Apple handler with native cordova plugin handler. forked from jramer/apple-oauth
+
+# Quick Start
+
+Add all required packages: quave:apple-oauth quave:accounts-apple service-configuration accounts-oauth
+
+Follow the next section fully.
+
 
 ## Config
 
@@ -27,8 +34,8 @@ Place the following in your settings.json:
 Set in the database on Meteor.startup:
 
 ```
-Meteor.startup(() => {
-    Accounts.loginServiceConfiguration.upsert(
+Meteor.startup(async () => {
+    await Accounts.loginServiceConfiguration.upsertAsync(
       {
         service: 'apple',
       },
