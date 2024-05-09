@@ -1,5 +1,9 @@
 ## Changelog
 
+### v3.1.2
+
+- bump cordova-plugin-device dependency
+
 ### v3.1.1
 
 - Remove whitespaces from the fullName and only set it on `serviceData` if it's not empty.
