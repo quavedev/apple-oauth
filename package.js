@@ -1,6 +1,6 @@
 Package.describe({
     name: 'quave:apple-oauth',
-    version: '3.1.1',
+    version: '3.1.2',
     summary: 'Sign in with Apple OAuth flow - fork from bigowl',
     git: 'https://github.com/quavedev/apple-oauth',
 });
@@ -32,5 +32,5 @@ Npm.depends({
 
 Cordova.depends({
     'cordova-plugin-sign-in-with-apple': '0.1.1',
-    'cordova-plugin-device': '2.0.3'
+    'cordova-plugin-device': '2.1.0'
 });
