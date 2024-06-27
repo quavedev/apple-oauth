@@ -69,16 +69,14 @@ const verifyAndParseIdentityToken = (query, idToken, isNative = false) =>
  * @param isNative
  * @param isBeingCalledFromLoginHandler
  */
-const getServiceDataFromTokens = ({ query, tokens, isNative = false, isBeingCalledFromLoginHandler = false }) => {
+const getServiceDataFromTokens = async ({ query, tokens, isNative = false, isBeingCalledFromLoginHandler = false }) => {
   const { accessToken, idToken, expiresIn } = tokens;
   const scopes = 'name email';
 
   let parsedIdToken;
 
   try {
-    parsedIdToken = Promise.await(
-      verifyAndParseIdentityToken(query, idToken, isNative)
-    );
+    parsedIdToken = await verifyAndParseIdentityToken(query, idToken, isNative);Ò
   } catch (error) {
     throw new Error(`Apple Id token verification failed. ${error}`);
   }
@@ -186,7 +184,7 @@ function getAbsoluteUrlOptions(query) {
  *
  * @param {*} query auth/authorize redirect response from apple
  */
-const getTokens = ({query, isNative = false}) => {
+const getTokens = async ({query, isNative = false}) => {
   const endpoint = 'https://appleid.apple.com/auth/token';
   let state = {};
   try {
@@ -194,7 +192,7 @@ const getTokens = ({query, isNative = false}) => {
   } catch (e) {}
 
   const appId = getAppIdFromOptions(state)
-  Apple.config = getServiceConfiguration({ appId });
+  Apple.config = await getServiceConfiguration({ appId });
   if (!Apple.config) {
     throw new ServiceConfiguration.ConfigError('Apple');
   }
@@ -217,14 +215,15 @@ const getTokens = ({query, isNative = false}) => {
       ? redirectUri
       : `${redirectUri}${redirectUri.endsWith('/') ? '' : '/'}_oauth/apple`;
 
-    response = HTTP.post(endpoint, {
-      params: {
+    response = await fetch(endpoint, {
+      method: 'post',
+      body: JSON.stringify({
         code: query.code,
         client_id: clientId,
         client_secret: token,
         grant_type: 'authorization_code',
         redirect_uri: redirectUriWithOauth,
-      },
+      }),
     });
   } catch (err) {
     throw Object.assign(
@@ -244,7 +243,8 @@ const getTokens = ({query, isNative = false}) => {
       user = query.user;
     }
   }
-  if (response.data.error) {
+  const data = await response.json()
+  if (data.error) {
     /**
      * The http response was a json object with an error attribute
      */
@@ -253,10 +253,10 @@ const getTokens = ({query, isNative = false}) => {
     );
   } else {
     return {
-      accessToken: response.data.access_token,
-      refreshToken: response.data.refresh_token,
-      expiresIn: response.data.expires_in,
-      idToken: response.data.id_token,
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      expiresIn: data.expires_in,
+      idToken: data.id_token,
       user,
       fullName: query.fullName
         ? [
@@ -276,7 +276,7 @@ const getServiceData = query =>
     query, tokens: getTokens({query})
 });
 OAuth.registerService('apple', 2, null, getServiceData);
-Accounts.registerLoginHandler(query => {
+Accounts.registerLoginHandler(async query => {
   const methodName = query.methodName;
   if (!Object.values(METHOD_NAMES).includes(methodName)) {
     return;
@@ -284,6 +284,6 @@ Accounts.registerLoginHandler(query => {
 
   const isNative = methodName === METHOD_NAMES.NATIVE;
   return getServiceDataFromTokens({
-    query, tokens: getTokens({query, isNative}), isNative, isBeingCalledFromLoginHandler: true
+    query, tokens: await getTokens({query, isNative}), isNative, isBeingCalledFromLoginHandler: true
   });
 });
