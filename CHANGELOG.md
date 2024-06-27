@@ -1,5 +1,9 @@
 ## Changelog
 
+### v4.0.0
+
+- Support Meteor 3.0
+
 ### v3.1.1
 
 - Remove whitespaces from the fullName and only set it on `serviceData` if it's not empty.

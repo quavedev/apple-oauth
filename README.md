@@ -1,5 +1,7 @@
 # quave:apple-oauth
 
+## Ready for Meteor 3.0 at 4.0.0
+
 Sign in with Apple handler with native cordova plugin handler. forked from jramer/apple-oauth
 
 # Quick Start
