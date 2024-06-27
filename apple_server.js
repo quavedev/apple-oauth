@@ -23,8 +23,8 @@ Apple.jwksClient = jwksClient({
  * @param {string} idToken Token to parse
  * @param isNative
  */
-const verifyAndParseIdentityToken = (query, idToken, isNative = false) =>
-  new Promise((resolve, reject) => {
+const verifyAndParseIdentityToken = async (query, idToken, isNative = false) => {
+  return new Promise((resolve, reject) => {
     const decoded = jwt.decode(idToken, { complete: true });
     const { kid, alg } = decoded.header;
     let state = {};
@@ -60,6 +60,7 @@ const verifyAndParseIdentityToken = (query, idToken, isNative = false) =>
       }
     });
   });
+  }
 
 /**
  * Extracts data from apples tokens and formats for accounts
@@ -76,7 +77,7 @@ const getServiceDataFromTokens = async ({ query, tokens, isNative = false, isBei
   let parsedIdToken;
 
   try {
-    parsedIdToken = await verifyAndParseIdentityToken(query, idToken, isNative);Ò
+    parsedIdToken = await verifyAndParseIdentityToken(query, idToken, isNative);
   } catch (error) {
     throw new Error(`Apple Id token verification failed. ${error}`);
   }
@@ -115,6 +116,7 @@ const getServiceDataFromTokens = async ({ query, tokens, isNative = false, isBei
         options
     );
   }
+
 
   return {
     serviceData,
@@ -163,7 +165,6 @@ function getAbsoluteUrlOptions(query) {
     return undefined;
   }
   try {
-    console.log('stateFromQuery', query);
     const state = OAuth._stateFromQuery(query) || {};
 
     const redirectUrl = state.redirectUrl;
@@ -214,16 +215,17 @@ const getTokens = async ({query, isNative = false}) => {
     const redirectUriWithOauth = redirectUri.includes('/_oauth/apple')
       ? redirectUri
       : `${redirectUri}${redirectUri.endsWith('/') ? '' : '/'}_oauth/apple`;
-
+    const body = {
+      code: query.code,
+      client_id: clientId,
+      client_secret: token,
+      grant_type: 'authorization_code',
+      redirect_uri: redirectUriWithOauth,
+    };
     response = await fetch(endpoint, {
-      method: 'post',
-      body: JSON.stringify({
-        code: query.code,
-        client_id: clientId,
-        client_secret: token,
-        grant_type: 'authorization_code',
-        redirect_uri: redirectUriWithOauth,
-      }),
+      method: 'POST',
+      body: new URLSearchParams(body),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
   } catch (err) {
     throw Object.assign(
@@ -249,7 +251,7 @@ const getTokens = async ({query, isNative = false}) => {
      * The http response was a json object with an error attribute
      */
     throw new Error(
-      `Failed to complete OAuth handshake with Apple. ${response.data.error}`
+      `Failed to complete OAuth handshake with Apple. ${data.error} `
     );
   } else {
     return {
@@ -271,10 +273,13 @@ const getTokens = async ({query, isNative = false}) => {
   }
 };
 
-const getServiceData = query =>
-  getServiceDataFromTokens({
-    query, tokens: getTokens({query})
-});
+const getServiceData = async query =>
+  {
+    const response = await getServiceDataFromTokens({
+      query, tokens: await getTokens({ query })
+    });
+    return response;
+  };
 OAuth.registerService('apple', 2, null, getServiceData);
 Accounts.registerLoginHandler(async query => {
   const methodName = query.methodName;
@@ -283,7 +288,8 @@ Accounts.registerLoginHandler(async query => {
   }
 
   const isNative = methodName === METHOD_NAMES.NATIVE;
-  return getServiceDataFromTokens({
+  const response = await getServiceDataFromTokens({
     query, tokens: await getTokens({query, isNative}), isNative, isBeingCalledFromLoginHandler: true
   });
+  return response;
 });
