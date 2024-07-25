@@ -1,12 +1,12 @@
 Package.describe({
     name: 'quave:apple-oauth',
-    version: '4.0.0-beta.2',
+    version: '4.0.0',
     summary: 'Sign in with Apple OAuth flow - fork from bigowl - Meteor v3 ready',
     git: 'https://github.com/quavedev/apple-oauth',
 });
 
 Package.onUse(function(api) {
-    api.versionsFrom(['1.9', '2.3', '3.0-rc.4'])
+    api.versionsFrom(['1.9', '2.3', '3.0.1'])
     api.use('ecmascript');
     api.use('base64');
     api.use('accounts-oauth');
