@@ -1,5 +1,9 @@
 ## Changelog
 
+### v4.0.0
+
+- Support Meteor 3.0
+
 ### v3.1.2
 
 - bump cordova-plugin-device dependency

@@ -13,9 +13,9 @@ export function getAppIdFromOptions(options) {
   return appId || null;
 }
 
-export function getServiceConfiguration({ appId = null }) {
+export async function getServiceConfiguration({ appId = null }) {
   // eslint-disable-next-line no-undef
-  const service = ServiceConfiguration.configurations.findOne({
+  const service = await ServiceConfiguration.configurations.findOneAsync({
     service: 'apple',
   });
   if (!appId) {
