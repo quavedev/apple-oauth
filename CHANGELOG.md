@@ -1,3 +1,7 @@
+## 4.0.1
+
+- Update locked jwa to 1.4.2 to avoid a SlowBuffer startup error on Node.js 26 (Meteor 3.6). Apple OAuth handlers and direct dependency versions are unchanged.
+
 ## Changelog
 
 ### v4.0.0
